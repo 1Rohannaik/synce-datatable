@@ -3,10 +3,7 @@ import DataTable from 'react-data-table-component';
 import { 
   generateDynamicColumns, 
   generateDefaultVisibleColumns, 
-  generateColumnLabels,
-  tableColumns, // Fallback
-  defaultVisibleColumns, // Fallback
-  columnLabels // Fallback
+  generateColumnLabels
 } from './config/columns.js';
 import employeeData from './data/employeeData.json';
 import './styles/DataTablePage.css';
@@ -28,7 +25,7 @@ const DataTablePage = () => {
   
   // Initialize visible columns with dynamic defaults
   const [visibleColumns, setVisibleColumns] = useState(() => {
-    return dynamicDefaultVisibleColumns.length > 0 ? dynamicDefaultVisibleColumns : defaultVisibleColumns;
+    return dynamicDefaultVisibleColumns;
   });
   
   // Update visible columns when data changes (new columns added)
@@ -56,9 +53,7 @@ const DataTablePage = () => {
 
   // Filter columns based on visibility settings
   const visibleTableColumns = useMemo(() => {
-    return dynamicColumns
-      .filter(column => visibleColumns.includes(column.id))
-      .filter(column => !column.omit); // Filter out omitted columns unless specifically made visible
+    return dynamicColumns.filter(column => visibleColumns.includes(column.id));
   }, [dynamicColumns, visibleColumns]);
 
   // Handle search input change
@@ -81,16 +76,14 @@ const DataTablePage = () => {
 
   // Handle select all/none columns
   const handleSelectAllColumns = () => {
-    const allColumnIds = dynamicColumns
-      .filter(col => !col.omit) // Don't auto-include omitted columns like ID
-      .map(col => col.id);
+    const allColumnIds = dynamicColumns.map(col => col.id);
     setVisibleColumns(allColumnIds);
   };
 
   const handleSelectNoColumns = () => {
-    // Keep at least one column visible - prefer 'name' or first available
-    const firstColumn = dynamicColumns.find(col => col.id === 'name') || dynamicColumns[0];
-    setVisibleColumns([firstColumn?.id]);
+    // Keep at least one column visible - use first available column
+    const firstColumn = dynamicColumns[0];
+    setVisibleColumns(firstColumn ? [firstColumn.id] : []);
   };
 
   // Export to CSV functionality
@@ -112,7 +105,7 @@ const DataTablePage = () => {
     const link = document.createElement('a');
     const url = URL.createObjectURL(blob);
     link.setAttribute('href', url);
-    link.setAttribute('download', `employee_data_${new Date().toISOString().split('T')[0]}.csv`);
+    link.setAttribute('download', `data_export_${new Date().toISOString().split('T')[0]}.csv`);
     link.style.visibility = 'hidden';
     document.body.appendChild(link);
     link.click();
@@ -221,7 +214,6 @@ const DataTablePage = () => {
 
   return (
     <div className="data-table-container">
-      {/* Page Header */}
   
 
       {/* Controls Section */}
@@ -298,9 +290,7 @@ const DataTablePage = () => {
                       Select None
                     </button>
                   </div>
-                  {dynamicColumns
-                    .filter(column => !column.omit || visibleColumns.includes(column.id)) // Show omitted columns only if they're currently visible
-                    .map(column => (
+                  {dynamicColumns.map(column => (
                     <div key={column.id} className="column-checkbox">
                       <input
                         type="checkbox"
